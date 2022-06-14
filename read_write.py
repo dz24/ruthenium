@@ -24,7 +24,6 @@ def reader(inp, out):
                     arr = []
 
 
-INPUT_ = './100739_moviePBC.xyz'
-OUTPUT = './100739_moviePBC_noX.xyz'
-
-reader(INPUT_, OUTPUT)
+# INPUT_ = './100739_moviePBC.xyz'
+# OUTPUT = './100739_moviePBC_noX.xyz'
+# reader(INPUT_, OUTPUT)

@@ -3,19 +3,24 @@
 from os import getcwd, mkdir
 from copy import *
 from operator import itemgetter
-from numpy import *
+import numpy as np
+from numba import jit
 import time
 
 
 def checkSaveFolders(saveDirectory):
     temp = ""
+    exist = False
     for folders in saveDirectory.split("/"):
         try:
             mkdir(temp + folders)
             print(temp + folders, "not found, creating directory...")
+            exist = False
         except:
             pass
+            exist = True
         temp += folders + "/"
+    return exist
 
 
 def Create_jmolspt(L, cutoffs, saveFolder, fileName):
@@ -50,8 +55,8 @@ def Create_jmolspt(L, cutoffs, saveFolder, fileName):
 
 def DISTANCE(c1, c2, L=None):
     vector = c1 - c2
-    if L is not None: vector -= L * around(vector / L)
-    d = sqrt(sum(vector * vector))
+    if L is not None: vector -= L * np.around(vector / L)
+    d = np.sqrt(sum(vector * vector))
     return d
 
 def CONNECTED(at1, at2, cutoffs, L=False):
@@ -75,6 +80,7 @@ def EXTRACTNEIGHBORSFROMLIST(atom, leftover, cutoffs, L):
     return extract, leftover
 
 
+@jit
 def MOLECLIST(atomlist, L, cutoffs):
     moleclist = []
     leftover = deepcopy(atomlist)
@@ -105,7 +111,7 @@ def MIRRORCOORDINATES(mol, L, N, Mirrors, cutoffs):
             cni = ni[0]
             cat = atom[0]
             vector = cni - cat
-            trans = around(vector / L)
+            trans = np.around(vector / L)
             cni -= trans * L
             ni[0] = cni
             mirror += [ni]
@@ -143,26 +149,19 @@ def WRITEMIRROR2MOV(mirrorlist, framecount, f):
     f.write(str(len(mirrorlist)) + "\n")
     f.write(str(framecount) + "\n")
     for at in reorderedmirror:
-        f.write(f'{at[1]}\t{at[0][0]}\t{at[0][1]}\t{at[0][2]}')
-        # f.write(
-        #     at[1] + " " + str(at[0]).replace("[", "").replace("]", "").replace(",", "") + " " + str(at[2]) + "\n")
-        start = time.time()
-        # print(at[1] + " " + str(at[0]).replace("[", "").replace("]", "").replace(",", "") + " " + str(at[2]) + "\n")
-        print(time.time() - start, 'part b')
-        start = time.time()
-        exit('yoyo')
+        f.write(f'{at[1]}\t{at[0][0]}\t{at[0][1]}\t{at[0][2]}\n')
 
 
 def WRITEFRAME(N, f, g, framecount, L, strcoordinates, cutoffs, centerindex, Mirrors, commentline):
-    shift = array([0., 0., 0.])
+    shift = np.array([0., 0., 0.])
 
     start = time.time()
     for i in centerindex:
         x, y, z = strcoordinates[i - 1].split()[1:4]
-        xyz = array([float(x), float(y), float(z)])
+        xyz = np.array([float(x), float(y), float(z)])
         shift += xyz
 
-    print(time.time() - start, 'first loop')
+    # print(time.time() - start, 'first loop')
     shift /= max(1, len(centerindex))
     shift -= L / 2.
     atomlist = []
@@ -170,27 +169,27 @@ def WRITEFRAME(N, f, g, framecount, L, strcoordinates, cutoffs, centerindex, Mir
     start = time.time()
     for atindex in range(N):
         element, x, y, z = strcoordinates[atindex].split()[0:4]
-        xyz = array([float(x), float(y), float(z)])
+        xyz = np.array([float(x), float(y), float(z)])
         xyz -= shift
-        xyz -= L * floor(xyz / L)
+        xyz -= L * np.floor(xyz / L)
         atom = [xyz, element, atindex + 1]
         atomlist += [atom]
-    print(time.time() - start, 'second loop')
+    # print(time.time() - start, 'second loop')
 
     moleclist = MOLECLIST(atomlist, L, cutoffs)
     WRITEMOLECLIST(g, moleclist, framecount, commentline)
     mirrorlist = []
 
-    start = time.time()
+    # start = time.time()
     for mol in moleclist:
         mol2 = MIRRORCOORDINATES(mol, L, N, Mirrors, cutoffs)
         mirrorlist += mol2
-    print(time.time() - start, 'third loop')
+    # print(time.time() - start, 'third loop')
 
-    start = time.time()
+    # start = time.time()
     WRITEMIRROR2MOV(mirrorlist, framecount, f)
-    print(time.time() - start, 'fourth loop')
-    exit('ape')
+    # print(time.time() - start, 'fourth loop')
+    # exit('ape')
 
 
 def createTitusMovie(fileName, loadDirectory, saveDirectory, frameStart, frameEnd):
@@ -211,7 +210,7 @@ def createTitusMovie(fileName, loadDirectory, saveDirectory, frameStart, frameEn
     f = open(ifile, "r")
     lines = f.readlines()
     N = int(lines[0])
-    L = array([L, L, L])
+    L = np.array([L, L, L])
     nframes = int(len(lines) / (N + 2))
 
     cutoffs = {"H": dH, "O": dO,"Ru": dRu, "X": dX, "N": dN, "F": dX}
