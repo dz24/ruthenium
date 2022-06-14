@@ -80,7 +80,6 @@ def EXTRACTNEIGHBORSFROMLIST(atom, leftover, cutoffs, L):
     return extract, leftover
 
 
-@jit
 def MOLECLIST(atomlist, L, cutoffs):
     moleclist = []
     leftover = deepcopy(atomlist)
@@ -92,6 +91,59 @@ def MOLECLIST(atomlist, L, cutoffs):
         while iat < len(mol):
             atom = mol[iat]
             neighbors, leftover = EXTRACTNEIGHBORSFROMLIST(atom, leftover, cutoffs, L)
+            mol += neighbors
+            iat += 1
+        moleclist += [mol]
+    return moleclist
+
+
+def MOLECLIST2(atomlist, L, cutoffs):
+    moleclist = []
+    leftover = deepcopy(atomlist)
+    xyz = np.array([i[0] for i in leftover])
+    for idx, atom in enumerate(leftover):
+        names = np.array([cutoffs[i[1]] for i in leftover[idx+1:]])
+        vector = xyz[idx] - xyz[idx+1:]
+        vector -= L * np.around(vector / L)
+        d = np.sqrt(np.sum(vector * vector, axis=1))
+        neighbors = d < cutoffs[leftover[0][1]] + names
+        print(idx, sum(neighbors))
+    print(xyz)
+
+    # names = [i[1] for i in leftover][1:]
+    # vector = xyz[0] - xyz[1:]
+    # vector -= L * np.around(vector / L)
+    # d = np.sqrt(np.sum(vector * vector, axis=1))
+    # neighbors = [d[idx] < cutoffs[leftover[0][1]] + cutoffs[name] for idx, name in enumerate(names)]
+
+    print(sum(neighbors))
+
+    #print(d < cutoffs
+    # print(xyz[0] - xyz[1:] - L*np.around()
+    exit('booger')
+
+    while len(leftover) > 0:
+        mol = []
+        mol += [leftover[0]]
+        del leftover[0]
+        iat = 0
+        while iat < len(mol):
+            atom = mol[iat]
+            extract, leftover0, exx = [], [], []
+            for sec in leftover:
+                vector = atom[0] - sec[0]
+                vector -= L * np.around(vector / L)
+                d = np.sqrt(sum(vector * vector))
+                exx.append(d < cutoffs[atom[1]]+ cutoffs[sec[1]])
+            # exx = [DISTANCE(atom[0], sec[0], L) < cutoffs[atom[1]]+ cutoffs[sec[1]] for sec in leftover]
+            for i, j in zip(exx, leftover):
+                if i:
+                    extract.append(j)
+                else:
+                    leftover0.append(j)
+            leftover = leftover0
+            neighbors = extract
+            # neighbors, leftover = EXTRACTNEIGHBORSFROMLIST(atom, leftover, cutoffs, L)
             mol += neighbors
             iat += 1
         moleclist += [mol]
@@ -176,7 +228,7 @@ def WRITEFRAME(N, f, g, framecount, L, strcoordinates, cutoffs, centerindex, Mir
         atomlist += [atom]
     # print(time.time() - start, 'second loop')
 
-    moleclist = MOLECLIST(atomlist, L, cutoffs)
+    moleclist = MOLECLIST2(atomlist, L, cutoffs)
     WRITEMOLECLIST(g, moleclist, framecount, commentline)
     mirrorlist = []
 
