@@ -10,14 +10,15 @@ from pyretis.pyvisa.common import read_traj_txt_file
 from op_from_hmo import finder, oh_finder
 from movieMaker import (createTitusMovie,
                         checkSaveFolders)
-from read_write import reader
+from read_write import (reader,
+                        o_history)
 
 
 def combine_xyz(traj, name, out, plot=False):
     """Combine subpaths to make one whole path.xyz."""
     traj_dic = read_traj_txt_file(traj + '/traj.txt')
     traj_txt = np.loadtxt(traj + '/traj.txt', dtype='str')
-    x_op_l, o_op_l = [], []
+    x_op_l, o_op_l, o_idx_l = [], [], []
     if not os.path.exists(f'./0-dump/{name}'):
         for _, values in traj_dic.items():
             base = values[0][:-4]
@@ -36,24 +37,25 @@ def combine_xyz(traj, name, out, plot=False):
                 names_1[o_idx] = 'N'
                 x_op_l.append(x_op)
                 o_op_l.append(o_op)
+                o_idx_l.append(o_idx)
 
                 if spin == 's1':
                     names_1[loc] = 'F'
                 else:
                     names_2[loc] = 'F'
-
                 names = names_1 + [nam for nam in names_2 if nam not in ('Ru', 'H', 'O')]
 
                 vel = np.concatenate((vel, vel_1[names_1.index('X'):],
                                       vel_2[names_2.index('X'):]))
                 write_xyz_trajectory(f'{out}/{name}', x,
-                                     vel, names, box, j[0])
-    with open(f'{out}/order_dz.txt', 'w', encoding='utf-8') as writer:
+                                     vel, names, box, step=j[0])
+    with open(f'{out}/order_{name[:-4]}.txt', 'w', encoding='utf-8') as writer:
+        writer.write('# idx\top_x\top_o\to_idx\n')
         for idx, (op_x, op_o) in enumerate(zip(x_op_l, o_op_l)):
-            writer.write(f'{idx}\t{op_x:.4f}\t{op_o:.4f}\n')
-    # WRITE o_op_l, x_op_l...!
-    if plot:
-        plotter(f'{out}/{name}', o_op_l, x_op_l, check=True)
+            writer.write(f'{idx}\t\t{op_x:.4f}\t{op_o:.4f}\t{o_idx_l[idx]:.0f}\n')
+    # # WRITE o_op_l, x_op_l...!
+    # if plot:
+    #     plotter(f'{out}/{name}', o_op_l, x_op_l, check=True)
 
 
 def plotter(traj, o_op, x_op, check=False):
@@ -74,23 +76,35 @@ def plotter(traj, o_op, x_op, check=False):
 
 DATA_PATH = './1-data'
 STRG_PATH = './2-movis'
-ens_l = ['004']
+ens_l = ['006']
 for ens in ens_l:
     pathens = np.loadtxt(f'{DATA_PATH}/{ens}/pathensemble.txt', dtype='str')
     acc = [line for line in pathens if 'ACC' in line and 'cs' in line]
-    # subfolder = [line[0] for line in acc]
     for idx, cycle in enumerate(acc):
-        sub, A, B = cycle[0], cycle[3], cycle[5]
+        print(f'ens:{ens}, cycle: {idx}')
+        sub, A, B, length = cycle[0], cycle[3], cycle[5], cycle[6]
         traj_path = f'{DATA_PATH}/{ens}/traj/traj-acc/{str(sub)}/'
         folder_name = f'{STRG_PATH}/{ens}-{idx}-{A}{B}'
-        path_name =  f'{ens}-{idx}-{A}{B}.xyz'
-        exist = checkSaveFolders(folder_name)
-        if exist:
-            # combine_xyz(traj_path, path_name, folder_name, plot=True)
-            createTitusMovie(path_name, folder_name, folder_name, 0, 2000)
-            reader(folder_name +'/' + path_name, folder_name + f'/{path_name[:-4]}_noX.xyz')
-            print('hi')                           
-        exit("ape")
+        path_name =  f'{ens}-{idx}-{A}{B}-{length}.xyz'
+        checkSaveFolders(folder_name)
+        out_path = os.path.join(folder_name, path_name)
+        out_path_O = path_name[:-4] + '-Ohist.xyz'
+
+        if not os.path.exists(out_path):
+            print('combining xyz.')
+            combine_xyz(traj_path, path_name, folder_name, plot=False)
+        print(out_path[:-4] + '-Ohist.xyz', os.path.exists(out_path[:-4] + '-Ohist.xyz'))
+        if not os.path.exists(out_path[:-4] + '-Ohist.xyz'):
+            print('making o-history xyz.')
+            order_file = os.path.join(folder_name, 'order_' + path_name[:-4] + '.txt')
+            o_history(out_path, order_file, out_path[:-4] + '-Ohist.xyz')
+        if not os.path.exists(out_path[:-4] +'-Ohist_moviePBC.xyz'):
+            print('making titus movie')
+            createTitusMovie(out_path_O, folder_name, folder_name, 0, 2000)
+        # Currently reader is bugged!
+        # add the history..
+        # reader(folder_name +'/' + path_name, folder_name + f'/{path_name[:-4]}_noX.xyz')
+        # exit("ape0")
     # print(acc)
     # print(subfolder)
 
@@ -100,3 +114,7 @@ for ens in ens_l:
 # combine_xyz(TRAJ_PATH, PATH plot=True)
 # createTitusMovie('100739.xyz', './0-dump', './0-dump', 0, 2000)
 # reader(inp, out) 
+
+
+#                    005-0-LL-216_moviePBC.xyz
+# ./2-movis/005-0-LL/005-0-LL-216_moviePBC.xyz

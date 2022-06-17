@@ -99,6 +99,7 @@ def MOLECLIST(atomlist, L, cutoffs):
 
 def MOLECLIST2(atomlist, L, cutoffs):
     moleclist = []
+    tot_idx = []
     leftover = deepcopy(atomlist)
     xyz = np.array([i[0] for i in leftover])
     for idx, atom in enumerate(leftover):
@@ -106,9 +107,17 @@ def MOLECLIST2(atomlist, L, cutoffs):
         vector = xyz[idx] - xyz[idx+1:]
         vector -= L * np.around(vector / L)
         d = np.sqrt(np.sum(vector * vector, axis=1))
-        neighbors = d < cutoffs[leftover[0][1]] + names
-        print(idx, sum(neighbors))
-    print(xyz)
+        neighbors = d < cutoffs[leftover[idx][1]] + names
+        neighbors = (len(leftover) - len(neighbors))*[False] + list(neighbors)
+        neighbors_idx = [idx] + [i for i in range(len(neighbors)) if neighbors[i] and i not in tot_idx]
+        bale = len([idx] + [i for i in range(len(neighbors)) if neighbors[i]])
+        # print(len(neighbors_idx), bale)
+        if idx not in tot_idx:
+            moleclist += [[leftover[i] for i in neighbors_idx]]
+        tot_idx = list(set(neighbors_idx + list(tot_idx)))
+        # if idx == 66:
+        #     exit('ape')
+    # exit('zippo')
 
     # names = [i[1] for i in leftover][1:]
     # vector = xyz[0] - xyz[1:]
@@ -120,33 +129,33 @@ def MOLECLIST2(atomlist, L, cutoffs):
 
     #print(d < cutoffs
     # print(xyz[0] - xyz[1:] - L*np.around()
-    exit('booger')
+    # exit('booger')
 
-    while len(leftover) > 0:
-        mol = []
-        mol += [leftover[0]]
-        del leftover[0]
-        iat = 0
-        while iat < len(mol):
-            atom = mol[iat]
-            extract, leftover0, exx = [], [], []
-            for sec in leftover:
-                vector = atom[0] - sec[0]
-                vector -= L * np.around(vector / L)
-                d = np.sqrt(sum(vector * vector))
-                exx.append(d < cutoffs[atom[1]]+ cutoffs[sec[1]])
-            # exx = [DISTANCE(atom[0], sec[0], L) < cutoffs[atom[1]]+ cutoffs[sec[1]] for sec in leftover]
-            for i, j in zip(exx, leftover):
-                if i:
-                    extract.append(j)
-                else:
-                    leftover0.append(j)
-            leftover = leftover0
-            neighbors = extract
-            # neighbors, leftover = EXTRACTNEIGHBORSFROMLIST(atom, leftover, cutoffs, L)
-            mol += neighbors
-            iat += 1
-        moleclist += [mol]
+    # while len(leftover) > 0:
+    #     mol = []
+    #     mol += [leftover[0]]
+    #     del leftover[0]
+    #     iat = 0
+    #     while iat < len(mol):
+    #         atom = mol[iat]
+    #         extract, leftover0, exx = [], [], []
+    #         for sec in leftover:
+    #             vector = atom[0] - sec[0]
+    #             vector -= L * np.around(vector / L)
+    #             d = np.sqrt(sum(vector * vector))
+    #             exx.append(d < cutoffs[atom[1]]+ cutoffs[sec[1]])
+    #         # exx = [DISTANCE(atom[0], sec[0], L) < cutoffs[atom[1]]+ cutoffs[sec[1]] for sec in leftover]
+    #         for i, j in zip(exx, leftover):
+    #             if i:
+    #                 extract.append(j)
+    #             else:
+    #                 leftover0.append(j)
+    #         leftover = leftover0
+    #         neighbors = extract
+    #         # neighbors, leftover = EXTRACTNEIGHBORSFROMLIST(atom, leftover, cutoffs, L)
+    #         mol += neighbors
+    #         iat += 1
+    #     moleclist += [mol]
     return moleclist
 
 
@@ -195,9 +204,9 @@ def WRITEMOLECLIST(g, moleclist, counter, commentline):
 
 
 def WRITEMIRROR2MOV(mirrorlist, framecount, f):
-    start = time.time()
+    # start = time.time()
     reorderedmirror = sorted(mirrorlist, key=itemgetter(2))
-    print(time.time() - start, 'part a')
+    # print(time.time() - start, 'part a')
     f.write(str(len(mirrorlist)) + "\n")
     f.write(str(framecount) + "\n")
     for at in reorderedmirror:
@@ -265,7 +274,7 @@ def createTitusMovie(fileName, loadDirectory, saveDirectory, frameStart, frameEn
     L = np.array([L, L, L])
     nframes = int(len(lines) / (N + 2))
 
-    cutoffs = {"H": dH, "O": dO,"Ru": dRu, "X": dX, "N": dN, "F": dX}
+    cutoffs = {"H": dH, "O": dO,"Ru": dRu, "X": dX, "N": dN, "F": dX, "B": dX}
 
     try:
         mkdir(saveDirectory)
