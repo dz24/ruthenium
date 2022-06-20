@@ -3,7 +3,7 @@ import numpy as np
 from pyretis.inout.formats.xyz import (read_xyz_file,
                                        convert_snapshot,
                                        write_xyz_trajectory)
-
+from op_from_hmo import oh_finder
 
 def reader(inp, out):
     """remove Xs in a periodicly generated traj for jmol."""
@@ -27,25 +27,28 @@ def reader(inp, out):
                         writer.write(f'{write_l}')
                     arr = []
 
-def o_history(inp, order_path, out):
+def o_history(inp, order_path, out, extra_o_idx_l):
     """remove Xs in a periodicly generated traj for jmol."""
     order = np.loadtxt(order_path)
-    o_idxes = set([i[3] for i in order])
+    o_idxes = set([i[3] for i in order] + extra_o_idx_l)
     traj = list(read_xyz_file(inp))
     if len(traj) != len(order):
         print(f'wrong length between {traj}')
         print(f'and  {order_path}')
         exit('ape6')
-    # elif len(o_idxes) == 1:
-    #     print('The OH- does not change. no need to make history based trajectory.')
-    #     # exit('ape5')
-    #     return
         
     for idx, (order_idx, frame) in enumerate(zip(order, traj)):
         box, xyz, vel, names = convert_snapshot(frame)
+        o_idx, _, _, at_ar = oh_finder(xyz[:names.index('X')])
         for o_idx in o_idxes:
             if names[int(o_idx)] == 'O':
                 names[int(o_idx)] = 'B'
+            for h_idx_tup in at_ar[int(o_idx)]:
+                names[h_idx_tup[0]] = 'He'
+                #print(h_idx_tup[0], 'kiki')
+        #exit('bape')
+
+
         write_xyz_trajectory(out, xyz, vel, names, box, idx)
 
 

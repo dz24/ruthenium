@@ -74,12 +74,8 @@ def oh_finder(xyz):
         at_ar[np.argmin(dist_arr)].append((RU+O + i, np.min(dist_arr)))
     o_idx = [len(i) for i in at_ar].index(1)
     h_idx, o_OP = at_ar[o_idx][0]
-    # ru_o = distances.distance_array(xyz[0], xyz[o_idx], box=BOX)[0]
     dist1 = distances.distance_array(xyz[0], xyz[o_idx], box=BOX)
     dist2 = distances.distance_array(xyz[1], xyz[o_idx], box=BOX)
     dist3 = distances.distance_array(xyz[0], xyz[1], box=BOX)
     ru_o = (dist1[0][0]-dist2[0][0])/dist3[0][0]
-    return o_idx, o_OP, ru_o
-
-
-
+    return o_idx, o_OP, ru_o, at_ar

@@ -274,7 +274,8 @@ def createTitusMovie(fileName, loadDirectory, saveDirectory, frameStart, frameEn
     L = np.array([L, L, L])
     nframes = int(len(lines) / (N + 2))
 
-    cutoffs = {"H": dH, "O": dO,"Ru": dRu, "X": dX, "N": dN, "F": dX, "B": dX}
+    # cutoffs = {"H": dH, "O": dO,"Ru": dRu, "X": dX, "N": dN, "F": dX, "B": dO, "He": dH}
+    cutoffs = {"H": dH, "O": dO,"Ru": dRu, "X": dX}
 
     try:
         mkdir(saveDirectory)
