@@ -293,9 +293,6 @@ def WRITEFRAME(N, f, g, framecount, L, strcoordinates, cutoffs, centerindex, Mir
         atom = [xyz, element, atindex + 1]
         atomlist += [atom]
 
-    # moleclist = MOLECLIST2(atomlist, L, cutoffs)
-    # moleclist = MOLECLIST(atomlist, L, cutoffs)
-    # moleclist = MOLECLIST3(atomlist, L, cutoffs)
     moleclist = MOLECLIST4(atomlist, L, cutoffs)
     WRITEMOLECLIST(g, moleclist, framecount, commentline)
     mirrorlist = []
