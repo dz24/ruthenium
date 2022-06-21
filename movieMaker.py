@@ -23,7 +23,12 @@ def checkSaveFolders(saveDirectory):
     return exist
 
 
-def Create_jmolspt(L, cutoffs, saveFolder, fileName):
+def Create_jmolspt(L, cutoffs, saveFolder, fileName, order):
+    OP_txt = np.loadtxt(order)
+    h2o_idx = [0]+[1]+list(OP_txt[0][3:])
+    o_idx_0, x_idx_0 = int(OP_txt[0][3]), int(OP_txt[0][4])
+    o_idx_1 = set([int(i[3]) for i in OP_txt if int(i[3]) != o_idx_0])
+
     f = open(saveFolder+"/"+fileName[:-4]+"_jmol.spt", "w")
     dir = getcwd()  # this give the working directory
     boxdimensions = str(L).replace("[", "").replace("]", "").replace(",", "")
@@ -49,8 +54,55 @@ def Create_jmolspt(L, cutoffs, saveFolder, fileName):
     string += "hbonds 0.01\n"
     string += "color hbonds yellow\n"
     string += "cpk 25%\n"
+    string += f"select atomno={o_idx_0+1}; color blue\n"
+    string += f"select atomno={x_idx_0+1}; color green\n"
+    for o_idx in o_idx_1:
+        string += f"select atomno={o_idx+1}; color peachpuff\n"
     f.write(string)
+    f.write(f"select not atomno=[{' '.join([str(int(i+1)) for i in h2o_idx])}]; wireframe only")
     f.close()
+
+
+def Create_jmolspt2(L, cutoffs, saveFolder, fileName, order):
+    OP_txt = np.loadtxt(order)
+    h2o_idx = [0]+[1]+list(OP_txt[0][3:])
+    o_idx_0, x_idx_0 = int(OP_txt[0][3]), int(OP_txt[0][4])
+    o_idx_1 = set([int(i[3]) for i in OP_txt if int(i[3]) != o_idx_0])
+
+    f = open(saveFolder+"/"+fileName[:-4]+"_jmol.spt", "w")
+    dir = getcwd()  # this give the working directory
+    boxdimensions = str(L).replace("[", "").replace("]", "").replace(",", "")
+    string = "load '"
+    string += dir + "/"
+    string += saveFolder+"/"+fileName[:-4]+"_moviePBC.xyz' {1 1 1} unitcell { "
+    string += boxdimensions
+    string += "  90.00  90.00  90.00}\n"
+    f.write(string)
+    string = "set PerspectiveDepth false\n"
+    string += "select all; set measure angstroms\n"
+    # string += "cpk off\n"
+    string += "set autobond false;\n"
+    string += "boundbox on\n"
+    f.write(string)
+    string = ""
+    for aa in cutoffs.keys():
+        for bb in cutoffs.keys():
+            string += "connect " + str(cutoffs[aa] + cutoffs[bb]) + " (_" + aa + ") (_" + bb + ")\n "
+    f.write(string)
+    string = "connect 1.5 2.5 (_O) (_H) hbond\n"
+    # string += "wireframe 0.2\n"
+    # string += "hbonds 0.01\n"
+    string += "select all ; hbonds off\n"
+    string += "connect (_Ru) (_O) DELETE\n"
+    string += "cpk 25%\n"
+    string += f"select atomno={o_idx_0+1}; color blue\n"
+    string += f"select atomno={x_idx_0+1}; color green\n"
+    for o_idx in o_idx_1:
+        string += f"select atomno={o_idx+1}; color peachpuff\n"
+    f.write(string)
+    f.write(f"select not atomno=[{' '.join([str(int(i+1)) for i in h2o_idx])}]; wireframe only")
+    f.close()
+
 
 
 def DISTANCE(c1, c2, L=None):
@@ -104,58 +156,68 @@ def MOLECLIST2(atomlist, L, cutoffs):
     xyz = np.array([i[0] for i in leftover])
     for idx, atom in enumerate(leftover):
         names = np.array([cutoffs[i[1]] for i in leftover[idx+1:]])
+        print(leftover[idx+1:])
+        exit('ape')
         vector = xyz[idx] - xyz[idx+1:]
         vector -= L * np.around(vector / L)
         d = np.sqrt(np.sum(vector * vector, axis=1))
         neighbors = d < cutoffs[leftover[idx][1]] + names
         neighbors = (len(leftover) - len(neighbors))*[False] + list(neighbors)
         neighbors_idx = [idx] + [i for i in range(len(neighbors)) if neighbors[i] and i not in tot_idx]
-        bale = len([idx] + [i for i in range(len(neighbors)) if neighbors[i]])
-        # print(len(neighbors_idx), bale)
         if idx not in tot_idx:
             moleclist += [[leftover[i] for i in neighbors_idx]]
         tot_idx = list(set(neighbors_idx + list(tot_idx)))
-        # if idx == 66:
-        #     exit('ape')
-    # exit('zippo')
+    return moleclist
 
-    # names = [i[1] for i in leftover][1:]
-    # vector = xyz[0] - xyz[1:]
-    # vector -= L * np.around(vector / L)
-    # d = np.sqrt(np.sum(vector * vector, axis=1))
-    # neighbors = [d[idx] < cutoffs[leftover[0][1]] + cutoffs[name] for idx, name in enumerate(names)]
 
-    print(sum(neighbors))
+def MOLECLIST4(atomlist, L, cutoffs):
+    moleclist = []
+    tot_idx = []
+    leftover = deepcopy(atomlist)
+    xyz = np.array([i[0] for i in leftover])
+    for idx, atom in enumerate(leftover):
+        if idx not in tot_idx:
+            names = np.array([cutoffs[i[1]] for i in leftover[idx+1:]])
+            vector = xyz[idx] - xyz[idx+1:]
+            vector -= L * np.around(vector / L)
+            d = np.sqrt(np.sum(vector * vector, axis=1))
+            neighbors = d < cutoffs[leftover[idx][1]] + names
+            neighbors = (len(leftover) - len(neighbors))*[False] + list(neighbors)
+            neighbors_idx = [idx] + [i for i in range(len(neighbors)) if neighbors[i] and i not in tot_idx]
+            moleclist += [[leftover[i] for i in neighbors_idx]]
+            tot_idx = list(set(neighbors_idx + list(tot_idx)))
+    return moleclist
 
-    #print(d < cutoffs
-    # print(xyz[0] - xyz[1:] - L*np.around()
-    # exit('booger')
 
-    # while len(leftover) > 0:
-    #     mol = []
-    #     mol += [leftover[0]]
-    #     del leftover[0]
-    #     iat = 0
-    #     while iat < len(mol):
-    #         atom = mol[iat]
-    #         extract, leftover0, exx = [], [], []
-    #         for sec in leftover:
-    #             vector = atom[0] - sec[0]
-    #             vector -= L * np.around(vector / L)
-    #             d = np.sqrt(sum(vector * vector))
-    #             exx.append(d < cutoffs[atom[1]]+ cutoffs[sec[1]])
-    #         # exx = [DISTANCE(atom[0], sec[0], L) < cutoffs[atom[1]]+ cutoffs[sec[1]] for sec in leftover]
-    #         for i, j in zip(exx, leftover):
-    #             if i:
-    #                 extract.append(j)
-    #             else:
-    #                 leftover0.append(j)
-    #         leftover = leftover0
-    #         neighbors = extract
-    #         # neighbors, leftover = EXTRACTNEIGHBORSFROMLIST(atom, leftover, cutoffs, L)
-    #         mol += neighbors
-    #         iat += 1
-    #     moleclist += [mol]
+def MOLECLIST3(atomlist, L, cutoffs):
+    moleclist = []
+    tot_idx = []
+    leftover = deepcopy(atomlist)
+    xyz = np.array([i[0] for i in leftover])
+
+    while len(leftover) > 0:
+        mol = []
+        mol += [leftover[0]]
+        del leftover[0]
+        iat = 0
+        while iat < len(mol):
+            atom = mol[iat]
+            extract, leftover0, exx = [], [], []
+            for sec in leftover:
+                vector = atom[0] - sec[0]
+                vector -= L * np.around(vector / L)
+                d = np.sqrt(sum(vector * vector))
+                exx.append(d < cutoffs[atom[1]]+ cutoffs[sec[1]])
+            for i, j in zip(exx, leftover):
+                if i:
+                    extract.append(j)
+                else:
+                    leftover0.append(j)
+            leftover = leftover0
+            neighbors = extract
+            mol += neighbors
+            iat += 1
+        moleclist += [mol]
     return moleclist
 
 
@@ -204,9 +266,7 @@ def WRITEMOLECLIST(g, moleclist, counter, commentline):
 
 
 def WRITEMIRROR2MOV(mirrorlist, framecount, f):
-    # start = time.time()
     reorderedmirror = sorted(mirrorlist, key=itemgetter(2))
-    # print(time.time() - start, 'part a')
     f.write(str(len(mirrorlist)) + "\n")
     f.write(str(framecount) + "\n")
     for at in reorderedmirror:
@@ -216,18 +276,15 @@ def WRITEMIRROR2MOV(mirrorlist, framecount, f):
 def WRITEFRAME(N, f, g, framecount, L, strcoordinates, cutoffs, centerindex, Mirrors, commentline):
     shift = np.array([0., 0., 0.])
 
-    start = time.time()
     for i in centerindex:
         x, y, z = strcoordinates[i - 1].split()[1:4]
         xyz = np.array([float(x), float(y), float(z)])
         shift += xyz
 
-    # print(time.time() - start, 'first loop')
     shift /= max(1, len(centerindex))
     shift -= L / 2.
     atomlist = []
 
-    start = time.time()
     for atindex in range(N):
         element, x, y, z = strcoordinates[atindex].split()[0:4]
         xyz = np.array([float(x), float(y), float(z)])
@@ -235,25 +292,22 @@ def WRITEFRAME(N, f, g, framecount, L, strcoordinates, cutoffs, centerindex, Mir
         xyz -= L * np.floor(xyz / L)
         atom = [xyz, element, atindex + 1]
         atomlist += [atom]
-    # print(time.time() - start, 'second loop')
 
-    moleclist = MOLECLIST2(atomlist, L, cutoffs)
+    # moleclist = MOLECLIST2(atomlist, L, cutoffs)
+    # moleclist = MOLECLIST(atomlist, L, cutoffs)
+    # moleclist = MOLECLIST3(atomlist, L, cutoffs)
+    moleclist = MOLECLIST4(atomlist, L, cutoffs)
     WRITEMOLECLIST(g, moleclist, framecount, commentline)
     mirrorlist = []
 
-    # start = time.time()
     for mol in moleclist:
         mol2 = MIRRORCOORDINATES(mol, L, N, Mirrors, cutoffs)
         mirrorlist += mol2
-    # print(time.time() - start, 'third loop')
 
-    # start = time.time()
     WRITEMIRROR2MOV(mirrorlist, framecount, f)
-    # print(time.time() - start, 'fourth loop')
-    # exit('ape')
 
 
-def createTitusMovie(fileName, loadDirectory, saveDirectory, frameStart, frameEnd):
+def createTitusMovie(fileName, loadDirectory, saveDirectory, frameStart, frameEnd, order):
 
     L = 12.4138
     selectframes = range(frameStart, frameEnd)
@@ -312,7 +366,8 @@ def createTitusMovie(fileName, loadDirectory, saveDirectory, frameStart, frameEn
     print("Trajectory files saved in:", loadDirectory)
 
     # new code: create jmol.spt from scratch
-    Create_jmolspt(L, cutoffs, saveDirectory, fileName)
+    # Create_jmolspt(L, cutoffs, saveDirectory, fileName, order)
+    Create_jmolspt2(L, cutoffs, saveDirectory, fileName, order)
 
 
 def makeMovie(fileName, loadDirectory=".", saveDirectory=".", ensemble="007", frameStart=0, frameEnd=2000, markOH=False, tracking=True ,**movieTypes):

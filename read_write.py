@@ -27,30 +27,33 @@ def reader(inp, out):
                         writer.write(f'{write_l}')
                     arr = []
 
-def o_history(inp, order_path, out, extra_o_idx_l):
-    """remove Xs in a periodicly generated traj for jmol."""
+def o_history(inp, order_path, out):
+    """rearrange..."""
     order = np.loadtxt(order_path)
-    o_idxes = set([i[3] for i in order] + extra_o_idx_l)
+    o_idx_0, x_idx_0 = int(order[0][3]), int(order[0][4])
+    # o_idxes = sorted(set([int(i[3]) for i in order]))
     traj = list(read_xyz_file(inp))
     if len(traj) != len(order):
         print(f'wrong length between {traj}')
         print(f'and  {order_path}')
         exit('ape6')
-        
+    
     for idx, (order_idx, frame) in enumerate(zip(order, traj)):
         box, xyz, vel, names = convert_snapshot(frame)
-        o_idx, _, _, at_ar = oh_finder(xyz[:names.index('X')])
-        for o_idx in o_idxes:
-            if names[int(o_idx)] == 'O':
-                names[int(o_idx)] = 'B'
-            for h_idx_tup in at_ar[int(o_idx)]:
-                names[h_idx_tup[0]] = 'He'
-                #print(h_idx_tup[0], 'kiki')
-        #exit('bape')
-
+        # o_idx, _, _, at_ar, _ = oh_finder(xyz[:names.index('X')])
+        o_idx, x_idx, h_idx = order[idx][3:6]
+        
+        # Switch xyz between active OH, X for jmol color.
+        if int(o_idx) != o_idx_0:
+            xyz_temp = xyz[int(o_idx)].copy()
+            xyz[int(o_idx)] = xyz[o_idx_0]
+            xyz[o_idx_0] = xyz_temp
+        if int(x_idx) != x_idx_0:
+            xyz_temp = xyz[int(x_idx)].copy()
+            xyz[int(x_idx)] = xyz[x_idx_0]
+            xyz[x_idx_0] = xyz_temp
 
         write_xyz_trajectory(out, xyz, vel, names, box, idx)
-
 
 # INPUT_ = './100739_moviePBC.xyz'
 # OUTPUT = './100739_moviePBC_noX.xyz'
