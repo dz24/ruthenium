@@ -17,6 +17,8 @@ def combine_xyz(traj, name, out, plot=False):
     traj_dic = read_traj_txt_file(traj + '/traj.txt')
     traj_txt = np.loadtxt(traj + '/traj.txt', dtype='str')
     x_op_l, o_op_l, o_idx_l, h_idx_l, x_idx_l = [], [], [], [], []
+    o_h_dist_l = []
+    o_h_l = [[] for i in range(66)]
     h2o_idxes = []
     for _, values in traj_dic.items():
         base = values[0][:-4]
@@ -33,24 +35,37 @@ def combine_xyz(traj, name, out, plot=False):
             x_op, _, spin, x_idx, _ = finder(xyz_1, xyz_2)
             x_idx = x_idx if spin == 's1' else x_idx + 262
             x_idx_l.append(x_idx)
-            o_idx, _, o_op, at_ar, h2o_idxes_0 = oh_finder(xyz_1[:names_2.index('X')])
+            o_idx, _, o_op, at_ar, h2o_idxes_0, o_h_dist = oh_finder(xyz_1[:names_2.index('X')])
             x_op_l.append(x_op)
             o_op_l.append(o_op)
             o_idx_l.append(o_idx)
             h_idx_l.append(at_ar[int(o_idx)][0][0])
+            o_h_dist_l.append(o_h_dist)
             h2o_idxes_0 += [h_tup[0] for h_tup in at_ar[o_idx]]
             h2o_idxes = list(set(h2o_idxes_0 + h2o_idxes))
+            
+            # make a list of total H ownership per O 
+            for i in range(66):
+                o_h_l[i] = list(set(o_h_l[i] + [h_tup[0] for h_tup in at_ar[i]]))
+
 
             names = names_1 + names_2[193:]
             vel = np.concatenate((vel, vel_1[names_1.index('X'):],
                                   vel_2[names_2.index('X'):]))
             write_xyz_trajectory(f'{out}/{name}', x,
                                  vel, names, box, step=j[0])
+
+    if 3 in [len(i) for i in o_h_l]:
+        o_h_l_index = [len(i) for i in o_h_l].index(3)
+        h2o_idxes = list(set(h2o_idxes + o_h_l[o_h_l_index]))
+        if  o_h_l_index not in h2o_idxes:
+            h2o_idxes.append(o_h_l_index)
+
     with open(f'{out}/order_{name[:-4]}.txt', 'w', encoding='utf-8') as writer:
 
-        writer.write('# idx\top_x\top_o\to_idx\tx_idx\th_idx\twater_idx\n')
+        writer.write('# idx\top_x\top_o\top_oh\to_idx\tx_idx\th_idx\twater_idx\n')
         for idx, (op_x, op_o) in enumerate(zip(x_op_l, o_op_l)):
-            writer.write(f'{idx}\t\t{op_x:.4f}\t{op_o:.4f}\t')
+            writer.write(f'{idx}\t\t{op_x:.4f}\t{op_o:.4f}\t{o_h_dist_l[idx]:.4f}\t')
             writer.write(f'{o_idx_l[idx]:.0f}\t\t{x_idx_l[idx]:.0f}\t\t')
             writer.write(f'{h_idx_l[idx]:.0f}\t\t')
             for h2o_idx in h2o_idxes:
@@ -114,6 +129,7 @@ def make_movie(in_path, out_path_name, out_folder, extra_o_idx_l=[]):
     order_file = os.path.join(out_folder,
                                 'order_' + out_path_name[:-4] + '.txt')
     print('bling')
+    print(out_path)
     if not os.path.exists(out_path):
         print('combining xyz.')
         combine_xyz(in_path, out_path_name, out_folder)
@@ -124,11 +140,13 @@ def make_movie(in_path, out_path_name, out_folder, extra_o_idx_l=[]):
         print('making titus movie')
         out_path_O = out_path_name[:-4] + '-Ohist.xyz'
         createTitusMovie(out_path_O, out_folder, out_folder, 0, 2000, order_file)
+        exit('apeman 10 000')
 
 
-DATA_PATH0 = './1-data/'
-STRG_PATH0 = './2-movis/1-sim_1/'
-ENS_L0 = ['006']
-# make_movies(DATA_PATH0, STRG_PATH0, ENS_L0)
+# DATA_PATH0 = './1-data/3-tis_sh_cs/2-cs/'
+DATA_PATH0 = './1-data/4-sim_4/'
+STRG_PATH0 = './2-movis/4-sim_4/'
+ENS_L0 = ['007']
+make_movies(DATA_PATH0, STRG_PATH0, ENS_L0)
 # make_movie('./1-data/006/traj/traj-acc/19', '006-9-LL-301.xyz', './0-dump/0-dump/')
-make_movie('./1-data/006/traj/traj-acc/19', '006-9-LL-301.xyz', './2-movis/1-sim_1/006-9-LL-301/')
+# make_movie('./1-data/006/traj/traj-acc/66', '006-15-LR-264.xyz', './2-movis/1-sim_1/006-15-LR-264/')

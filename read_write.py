@@ -30,8 +30,7 @@ def reader(inp, out):
 def o_history(inp, order_path, out):
     """rearrange..."""
     order = np.loadtxt(order_path)
-    o_idx_0, x_idx_0 = int(order[0][3]), int(order[0][4])
-    # o_idxes = sorted(set([int(i[3]) for i in order]))
+    o_idx_0, x_idx_0 = int(order[0][4]), int(order[0][5])
     traj = list(read_xyz_file(inp))
     if len(traj) != len(order):
         print(f'wrong length between {traj}')
@@ -41,7 +40,7 @@ def o_history(inp, order_path, out):
     for idx, (order_idx, frame) in enumerate(zip(order, traj)):
         box, xyz, vel, names = convert_snapshot(frame)
         # o_idx, _, _, at_ar, _ = oh_finder(xyz[:names.index('X')])
-        o_idx, x_idx, h_idx = order[idx][3:6]
+        o_idx, x_idx, h_idx = order[idx][4:7]
         
         # Switch xyz between active OH, X for jmol color.
         if int(o_idx) != o_idx_0:

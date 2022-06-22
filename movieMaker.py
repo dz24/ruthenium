@@ -25,9 +25,9 @@ def checkSaveFolders(saveDirectory):
 
 def Create_jmolspt(L, cutoffs, saveFolder, fileName, order):
     OP_txt = np.loadtxt(order)
-    h2o_idx = [0]+[1]+list(OP_txt[0][3:])
-    o_idx_0, x_idx_0 = int(OP_txt[0][3]), int(OP_txt[0][4])
-    o_idx_1 = set([int(i[3]) for i in OP_txt if int(i[3]) != o_idx_0])
+    h2o_idx = [0]+[1]+list(OP_txt[0][4:])
+    o_idx_0, x_idx_0 = int(OP_txt[0][4]), int(OP_txt[0][5])
+    o_idx_1 = set([int(i[3]) for i in OP_txt if int(i[4]) != o_idx_0])
 
     f = open(saveFolder+"/"+fileName[:-4]+"_jmol.spt", "w")
     dir = getcwd()  # this give the working directory
@@ -65,9 +65,14 @@ def Create_jmolspt(L, cutoffs, saveFolder, fileName, order):
 
 def Create_jmolspt2(L, cutoffs, saveFolder, fileName, order):
     OP_txt = np.loadtxt(order)
-    h2o_idx = [0]+[1]+list(OP_txt[0][3:])
-    o_idx_0, x_idx_0 = int(OP_txt[0][3]), int(OP_txt[0][4])
-    o_idx_1 = set([int(i[3]) for i in OP_txt if int(i[3]) != o_idx_0])
+    h2o_idx = [0]+[1]+list(OP_txt[0][4:])
+    o_idx_0, x_idx_0 = int(OP_txt[0][4]), int(OP_txt[0][5])
+    o_idx_1 = set([int(i[4]) for i in OP_txt if int(i[4]) != o_idx_0])
+
+    # Color the complex (that does not become OH:
+    o_complex_idx = []
+    if sum([i < 66 for i in OP_txt[0][7:]]) > 12 and OP_txt[0][-1] < 66:
+        o_complex_idx = [OP_txt[0][-1]]
 
     f = open(saveFolder+"/"+fileName[:-4]+"_jmol.spt", "w")
     dir = getcwd()  # this give the working directory
@@ -82,14 +87,12 @@ def Create_jmolspt2(L, cutoffs, saveFolder, fileName, order):
     string += "select all; set measure angstroms\n"
     # string += "cpk off\n"
     string += "set autobond false;\n"
-    string += "boundbox on\n"
+    string += "boundbox off\n"
     f.write(string)
     string = ""
-    for aa in cutoffs.keys():
-        for bb in cutoffs.keys():
-            string += "connect " + str(cutoffs[aa] + cutoffs[bb]) + " (_" + aa + ") (_" + bb + ")\n "
+    #string += "connect " + str(cutoffs['O'] + cutoffs['H']) + " (_O) (_H)\n "
     f.write(string)
-    string = "connect 1.5 2.5 (_O) (_H) hbond\n"
+    #string = "connect 1.5 2.5 (_O) (_H) hbond\n"
     # string += "wireframe 0.2\n"
     # string += "hbonds 0.01\n"
     string += "select all ; hbonds off\n"
@@ -99,6 +102,8 @@ def Create_jmolspt2(L, cutoffs, saveFolder, fileName, order):
     string += f"select atomno={x_idx_0+1}; color green\n"
     for o_idx in o_idx_1:
         string += f"select atomno={o_idx+1}; color peachpuff\n"
+    if o_complex_idx:
+        string += f"select atomno={o_complex_idx[0]+1}; color peachpuff\n"
     f.write(string)
     f.write(f"select not atomno=[{' '.join([str(int(i+1)) for i in h2o_idx])}]; wireframe only")
     f.close()

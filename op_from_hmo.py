@@ -78,6 +78,7 @@ def oh_finder(xyz):
     dist2 = distances.distance_array(xyz[1], xyz[o_idx], box=BOX)
     dist3 = distances.distance_array(xyz[0], xyz[1], box=BOX)
     ru_o = (dist1[0][0]-dist2[0][0])/dist3[0][0]
+    o_h_dist = distances.distance_array(xyz[o_idx], xyz[h_idx], box=BOX)[0]
 
     #find the surrounding ru h2o molecules
     h2o_indexes = []
@@ -91,4 +92,4 @@ def oh_finder(xyz):
             h2o_indexes += [h_idxes[0]]
     h2o_indexes += [o_idx] + [h_tup[0] for h_tup in at_ar[o_idx]]
 
-    return o_idx, o_OP, ru_o, at_ar, h2o_indexes
+    return o_idx, o_OP, ru_o, at_ar, h2o_indexes, o_h_dist[0]
