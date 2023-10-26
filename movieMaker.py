@@ -4,7 +4,6 @@ from os import getcwd, mkdir
 from copy import *
 from operator import itemgetter
 import numpy as np
-from numba import jit
 import time
 
 
@@ -90,12 +89,17 @@ def Create_jmolspt2(L, cutoffs, saveFolder, fileName, order):
     string += "boundbox off\n"
     f.write(string)
     string = ""
-    #string += "connect " + str(cutoffs['O'] + cutoffs['H']) + " (_O) (_H)\n "
+    # string += "connect " + str(cutoffs['O'] + cutoffs['H']) + " (_O) (_H)\n"
+    string = "connect 1.5 2.5 (_O) (_H) hbond\n"
+    string += "hbonds 0.01\n"
+    string += "color hbonds yellow\n"
     f.write(string)
-    #string = "connect 1.5 2.5 (_O) (_H) hbond\n"
+    string = ""
+    f.write(f"select not atomno=[{' '.join([str(int(i+1)) for i in h2o_idx])}]; hbonds off\n")
+    # string = "connect 1.5 2.5 (_O) (_H) hbond\n"
     # string += "wireframe 0.2\n"
     # string += "hbonds 0.01\n"
-    string += "select all ; hbonds off\n"
+    # string += "select all ; hbonds off\n"
     string += "connect (_Ru) (_O) DELETE\n"
     string += "cpk 25%\n"
     string += f"select atomno={o_idx_0+1}; color blue\n"

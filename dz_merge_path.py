@@ -22,9 +22,9 @@ def combine_xyz(traj, name, out, plot=False):
     h2o_idxes = []
     for _, values in traj_dic.items():
         base = values[0][:-4]
-        traj_l = list(read_xyz_file(f'./{traj}/traj/{values[0]}'))
-        traj_s1 = list(read_xyz_file(f'./{traj}/traj/{base}-home1.xyz'))
-        traj_s2 = list(read_xyz_file(f'./{traj}/traj/{base}-home2.xyz'))
+        traj_l = list(read_xyz_file(f'{traj}/traj/{values[0]}'))
+        traj_s1 = list(read_xyz_file(f'{traj}/traj/{base}-home1.xyz'))
+        traj_s2 = list(read_xyz_file(f'{traj}/traj/{base}-home2.xyz'))
         for j in [line for line in traj_txt if line[1] in values[0]]:
             box, xyz, vel, names = convert_snapshot(traj_l[int(j[2])])
             _, xyz_1, vel_1, names_1 = convert_snapshot(traj_s1[int(j[2])])
@@ -43,7 +43,7 @@ def combine_xyz(traj, name, out, plot=False):
             o_h_dist_l.append(o_h_dist)
             h2o_idxes_0 += [h_tup[0] for h_tup in at_ar[o_idx]]
             h2o_idxes = list(set(h2o_idxes_0 + h2o_idxes))
-            
+
             # make a list of total H ownership per O 
             for i in range(66):
                 o_h_l[i] = list(set(o_h_l[i] + [h_tup[0] for h_tup in at_ar[i]]))
@@ -140,13 +140,15 @@ def make_movie(in_path, out_path_name, out_folder, extra_o_idx_l=[]):
         print('making titus movie')
         out_path_O = out_path_name[:-4] + '-Ohist.xyz'
         createTitusMovie(out_path_O, out_folder, out_folder, 0, 2000, order_file)
-        exit('apeman 10 000')
 
 
 # DATA_PATH0 = './1-data/3-tis_sh_cs/2-cs/'
-DATA_PATH0 = './1-data/4-sim_4/'
-STRG_PATH0 = './2-movis/4-sim_4/'
-ENS_L0 = ['007']
-make_movies(DATA_PATH0, STRG_PATH0, ENS_L0)
+# DATA_PATH0 = './1-data/3-tis_sh_cs/2-cs/'
+# STRG_PATH0 = './2-movis/3-tis_sh_cs/'
+# ENS_L0 = ['002']
+# make_movies(DATA_PATH0, STRG_PATH0, ENS_L0)
 # make_movie('./1-data/006/traj/traj-acc/19', '006-9-LL-301.xyz', './0-dump/0-dump/')
+# make_movie('/home/danielzh/dump/plot/4/005/65', '006-9-LL-301.xyz', './0-dump/0-dump/')
+# make_movie('./1-data/4-sim_4/007/traj/traj-acc/215/', '007.xyz', './0-dump/0-dump/')
+make_movie('/media/danielzh/LaCie/a-papers/2-ruru/a-data/a-production_run_1/5-run_4/007/traj/traj-acc/309', '007.xyz', './0-dump/0-dump/')
 # make_movie('./1-data/006/traj/traj-acc/66', '006-15-LR-264.xyz', './2-movis/1-sim_1/006-15-LR-264/')
