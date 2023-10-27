@@ -50,9 +50,9 @@ def finder(xyz):
         dist2 = distances.distance_array(xyz[1], xyz[loc], box=BOX)
         dist3 = distances.distance_array(xyz[0], xyz[1], box=BOX)
         OP = (dist1[0][0]-dist2[0][0])/dist3[0][0]
-        return OP, dist1[0][0], 's0', loc, bad
+        return OP, loc
     else:
-        return None, None, None, None, bad, None
+        return None, None
 
 
 def finder_a(atom_array, dic, xyz0, spin):
@@ -76,7 +76,7 @@ def oh_finder(xyz):
         dist_arr = distances.distance_array(xyz[RU+O + i], xyz[:RU+O], box=BOX)[0]
         at_ar[np.argmin(dist_arr)].append((RU+O + i, np.min(dist_arr)))
     o_idx = [len(i) for i in at_ar].index(1)
-    h_idx, o_OP = at_ar[o_idx][0]
+    h_idx, o_op = at_ar[o_idx][0]
     dist1 = distances.distance_array(xyz[0], xyz[o_idx], box=BOX)
     dist2 = distances.distance_array(xyz[1], xyz[o_idx], box=BOX)
     dist3 = distances.distance_array(xyz[0], xyz[1], box=BOX)
@@ -95,4 +95,5 @@ def oh_finder(xyz):
             h2o_indexes += [h_idxes[0]]
     h2o_indexes += [o_idx] + [h_tup[0] for h_tup in at_ar[o_idx]]
 
-    return o_idx, o_OP, ru_o, at_ar, h2o_indexes, o_h_dist[0]
+    # return o_idx, o_op, ru_o, at_ar, h2o_indexes, o_h_dist[0]
+    return o_idx, o_op, at_ar, h2o_indexes, o_h_dist[0]
