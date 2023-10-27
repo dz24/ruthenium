@@ -1,5 +1,3 @@
-# from trajManipulation import *
-# from manipulateOrderParameter import *
 from os import getcwd, mkdir
 from copy import *
 from operator import itemgetter

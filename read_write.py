@@ -37,6 +37,7 @@ def o_history(inp, order_path, out):
         print(f'and  {order_path}')
         exit('ape6')
     
+    print('pirate', inp, out)
     for idx, (order_idx, frame) in enumerate(zip(order, traj)):
         box, xyz, vel, names = convert_snapshot(frame)
         # o_idx, _, _, at_ar, _ = oh_finder(xyz[:names.index('X')])
@@ -56,4 +57,5 @@ def o_history(inp, order_path, out):
 
 # INPUT_ = './100739_moviePBC.xyz'
 # OUTPUT = './100739_moviePBC_noX.xyz'
+
 # reader(INPUT_, OUTPUT)

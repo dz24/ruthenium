@@ -8,15 +8,14 @@ AT, O, RU = 193, 64, 2
 NAMES = ['RU']*RU + ['O']*O + ['H']*(AT-O-RU)
 
 
-def finder(xyz1, xyz2):
+def finder(xyz):
     """Calculate something ."""
     at_ar = [0] * (RU+O)
     dic = {i: [] for i in range(RU+O)}
     bad = False
 
     # Generate atom_array and dict:
-    at_ar, dic = finder_a(at_ar, dic, xyz1, 's1')
-    at_ar, dic = finder_a(at_ar, dic, xyz2, 's2')
+    at_ar, dic = finder_a(at_ar, dic, xyz, 's1')
 
     # Find the atom a_idx and excess electron x_idx:
     if 6 in at_ar[0:2]:
@@ -34,20 +33,24 @@ def finder(xyz1, xyz2):
                 dist = dic[a_idx0][x_idx0]['dist']
                 a_idx, x_idx = a_idx0, x_idx0
     else:
-        print('It did not seem like we converged..')
-        bad = True
+        if sum(at_ar) == 1:
+            a_idx = at_ar.index(1)
+            x_idx = np.argmax([i['dist'] for i in dic[a_idx]])
+        else:
+            print('It did not seem like we converged..')
+            bad = True
 
     if not bad:
         loc = dic[a_idx][x_idx]['x_loc']
-        spin = dic[a_idx][x_idx]['spin']
-        traj = xyz1 if spin == 's1' else xyz2
+        # spin = dic[a_idx][x_idx]['spin']
+        # traj = xyz1 if spin == 's1' else xyz2
 
         # Ru1-el, Ru2-el, Ru1-Ru2
-        dist1 = distances.distance_array(traj[0], traj[loc], box=BOX)
-        dist2 = distances.distance_array(traj[1], traj[loc], box=BOX)
-        dist3 = distances.distance_array(traj[0], traj[1], box=BOX)
+        dist1 = distances.distance_array(xyz[0], xyz[loc], box=BOX)
+        dist2 = distances.distance_array(xyz[1], xyz[loc], box=BOX)
+        dist3 = distances.distance_array(xyz[0], xyz[1], box=BOX)
         OP = (dist1[0][0]-dist2[0][0])/dist3[0][0]
-        return OP, dist1[0][0], spin, loc, bad
+        return OP, dist1[0][0], 's0', loc, bad
     else:
         return None, None, None, None, bad, None
 
