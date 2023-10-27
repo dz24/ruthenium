@@ -41,11 +41,12 @@ def orderp_mov(traj_n, out, plot=False):
     x_op_l, o_op_l, o_idx_l, h_idx_l, x_idx_l = [], [], [], [], []
     o_h_dist_l = []
     o_h_l = [[] for i in range(66)]
+    h2o_idxes = []
     traj_l = list(read_xyz_file(traj_n))
     for frame in traj_l:
         box, xyz, vel, names = convert_snapshot(frame)
-        o_idx, o_op, at_ar, h2o_idxes_0, o_h_dist = oh_finder(xyz[: names.index("X")])
-        x_op, x_idx = finder(xyz)
+        o_idx, o_op, at_ar, h2o_idxes_0, o_h_dist = oh_finder(xyz[:names.index("X")])
+        x_op, x_idx,= finder(xyz)
         x_op_l.append(x_op)
         o_op_l.append(o_op)
         o_idx_l.append(o_idx)
@@ -53,7 +54,7 @@ def orderp_mov(traj_n, out, plot=False):
         x_idx_l.append(x_idx)
         o_h_dist_l.append(o_h_dist)
         h2o_idxes_0 += [h_tup[0] for h_tup in at_ar[o_idx]]
-        h2o_idxes = list(set(h2o_idxes_0))
+        h2o_idxes = list(set(h2o_idxes_0 + h2o_idxes))
 
     if 3 in [len(i) for i in o_h_l]:
         o_h_l_index = [len(i) for i in o_h_l].index(3)
@@ -90,6 +91,8 @@ def make_movie(infile, out_folder, extra_o_idx_l=[]):
         print("making titus movie")
         outfile_O = outfile[:-5] + "-Ohist.xyz"
         createTitusMovie(outfile_O, out_folder, out_folder, 0, 2000, order_file)
+    
+    # delete old
 
 
 make_movie("dump/accepted/merged-homos.xyz", "./dump_out/")
