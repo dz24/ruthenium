@@ -91,7 +91,7 @@ def make_movie(infile, out_folder, extra_o_idx_l=[]):
         print("making titus movie")
         outfile_O = outfile[:-5] + "-Ohist.xyz"
         createTitusMovie(outfile_O, out_folder, out_folder, 0, 2000, order_file)
-    
+
     # delete old
 
 
